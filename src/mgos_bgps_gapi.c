@@ -94,7 +94,7 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data,
 static bool mg_bgps_gapi_start_get_position(int aps_len, struct mgos_wifi_scan_result *aps) {
   bool success = false;
 
-  struct mg_bgps_gapi_state *state = callco(1, sizeof(struct mg_bgps_gapi_state));
+  struct mg_bgps_gapi_state *state = calloc(1, sizeof(struct mg_bgps_gapi_state));
   state->request_body = json_asprintf("{considerIp: false, wifiAccessPoints: %M}",
     mg_wifi_scan_result_to_json, aps, aps_len);
 
