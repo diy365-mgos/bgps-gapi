@@ -1,5 +1,5 @@
-#include "mgos_bgps_gapi.h"
 #include "mgos.h"
+#include "mgos_bgps_gapi.h"
 #include "frozen.h"
 
 #ifdef MGOS_HAVE_MJS
