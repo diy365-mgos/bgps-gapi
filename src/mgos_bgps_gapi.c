@@ -34,8 +34,6 @@ int mg_wifi_scan_result_to_json(struct json_out *out, va_list *ap) {
 static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data, void *ud) {
   struct http_message *hm = (struct http_message *) ev_data;
 
-  LOG(LL_INFO,("EVENT HTTP %d", ev));
-  
   switch (ev) {
     case MG_EV_CONNECT:
       if ((*(int *) ev_data) != 0) {
@@ -43,6 +41,9 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data,
         LOG(LL_ERROR,("Error %d connecting...", (*(int *) ev_data)));
         s_position_ok = false;
       }
+      break;
+    case MG_EV_HTTP_CHUNK:
+      LOG(LL_INFO,("MG_EV_HTTP_CHUNK"));
       break;
     case MG_EV_HTTP_REPLY:
       if (hm->resp_code == 200) {
@@ -63,16 +64,19 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data,
             "accuracy": 120
           } 
         */
-        LOG(LL_INFO,("%s", hm->body.p));
+        LOG(LL_INFO,("OK 200 > %s", hm->body.p));
         json_scanf(hm->body.p, hm->body.len,
           "{location: {lat: %f, lng: %f}, accuracy: %d}",
            &s_latitude, &s_longitude, &s_accuracy);
         
         s_position_ok = true;
       } else {
-        LOG(LL_ERROR,("%s", hm->body.p));
+        LOG(LL_ERROR,("ERR %d > %s", hm->resp_code, hm->body.p));
         s_position_ok = false;
       }
+      break;
+    case MG_EV_CLOSE:
+      LOG(LL_INFO,("MG_EV_CLOSE"));
       break;
   }
 }
