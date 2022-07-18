@@ -20,7 +20,7 @@ int mg_wifi_scan_result_to_json(struct json_out *out, va_list *ap) {
   int count = json_printf(out, "[");
 
   for (int i = 0; i < aps_len; i++) {
-    if (i > 0) count += json_printf(out, ",");
+    if (i > 0) count += json_printf(out, ", ");
 
     count += json_printf(out, "{signalToNoiseRatio: 0, age: 0,signalToNoiseRatio: 0, channel: %d, signalStrength: %2d, macAddress: \"%02x:%02x:%02x:%02x:%02x:%02x\"}",
       aps[i].channel, aps[i].rssi,
@@ -34,6 +34,8 @@ int mg_wifi_scan_result_to_json(struct json_out *out, va_list *ap) {
 static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data, void *ud) {
   struct http_message *hm = (struct http_message *) ev_data;
 
+  LOG(LL_INFO,("EVENT HTTP %d", ev));
+  
   switch (ev) {
     case MG_EV_CONNECT:
       if ((*(int *) ev_data) != 0) {
@@ -61,10 +63,11 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data,
             "accuracy": 120
           } 
         */
+        LOG(LL_INFO,("%s", hm->body.p));
         json_scanf(hm->body.p, hm->body.len,
           "{location: {lat: %f, lng: %f}, accuracy: %d}",
            &s_latitude, &s_longitude, &s_accuracy);
-        LOG(LL_INFO,("%s", hm->body.p));
+        
         s_position_ok = true;
       } else {
         LOG(LL_ERROR,("%s", hm->body.p));
