@@ -45,6 +45,7 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data,
     case MG_EV_CONNECT:
       if ((*(int *) ev_data) != 0) {
         /* Error connecting */
+        LOG(LL_ERROR,("Error connecting..."));
         s_position_ok = false;
       }
       break;
@@ -70,8 +71,10 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data,
         json_scanf(hm->body.p, hm->body.len,
           "{location: {lat: %f, lng: %f}, accuracy: %d}",
            &s_latitude, &s_longitude, &s_accuracy);
+        LOG(LL_INFO,("%s", hm->body.p));
         s_position_ok = true;
       } else {
+        LOG(LL_ERROR,("%s", hm->body.p));
         s_position_ok = false;
       }
       break;
@@ -87,6 +90,11 @@ static bool mg_bgps_gapi_start_get_position(int aps_len, struct mgos_wifi_scan_r
     if (request_body) {
       success = mg_connect_http(mgos_get_mgr(), mg_bgps_gapi_http_cb, NULL, s_api_url,
         "Content-Type=application/json", request_body);
+      
+      if (!success) {
+        LOG(LL_ERROR,("Failed POST %s", s_api_url));
+      }
+
       free(request_body);
     }
   }
