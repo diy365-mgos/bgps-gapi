@@ -6,6 +6,11 @@
 #include "mjs.h"
 #endif /* MGOS_HAVE_MJS */
 
+struct mg_bgps_gapi_state {
+  char *request_body;
+  int status;
+};
+
 static char *s_api_url = NULL;
 
 static bool s_position_ok = false;
@@ -65,17 +70,21 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data,
           } 
         */
         LOG(LL_INFO,("OK 200 > %s", hm->body.p));
+
         json_scanf(hm->body.p, hm->body.len,
           "{location: {lat: %f, lng: %f}, accuracy: %d}",
            &s_latitude, &s_longitude, &s_accuracy);
-        
         s_position_ok = true;
+
       } else {
         LOG(LL_ERROR,("ERR %d > %s", hm->resp_code, hm->body.p));
         s_position_ok = false;
+  
       }
       break;
     case MG_EV_CLOSE:
+      free(state->request_body);
+      free(state);
       LOG(LL_INFO,("MG_EV_CLOSE"));
       break;
   }
@@ -83,22 +92,18 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data,
 
 static bool mg_bgps_gapi_start_get_position(int aps_len, struct mgos_wifi_scan_result *aps) {
   bool success = false;
-  if (s_api_url) {
-    char *request_body = json_asprintf("{considerIp: false, wifiAccessPoints: %M}",
-      mg_wifi_scan_result_to_json, aps, aps_len);
 
-    if (request_body) {
-      success = mg_connect_http(mgos_get_mgr(), mg_bgps_gapi_http_cb, NULL, s_api_url,
-        "Content-Type=application/json", request_body);
-      
-      if (!success) {
-        LOG(LL_ERROR,("Failed POST %s", s_api_url));
-      } else {
-        LOG(LL_INFO,("POST %s to %s", request_body, s_api_url));
-      }
+  struct mg_bgps_gapi_state *state = callco(1, sizeof(struct mg_bgps_gapi_state));
+  state->request_body = json_asprintf("{considerIp: false, wifiAccessPoints: %M}",
+    mg_wifi_scan_result_to_json, aps, aps_len);
 
-      free(request_body);
-    }
+  success = mg_connect_http(mgos_get_mgr(), mg_bgps_gapi_http_cb, state, s_api_url,
+    "Content-Type=application/json", state->request_body);
+
+  if (!success) {
+    LOG(LL_ERROR,("Failed POST %s", s_api_url));
+  } else {
+    LOG(LL_INFO,("POST %s to %s", request_body, s_api_url));
   }
 
   return success;
@@ -152,12 +157,12 @@ bool mgos_bgps_gapi_init() {
   }
 
   // Start the polling interval
-  if (mgos_sys_config_get_gps_gapi_update_interval() > 0) {
+  if (s_api_url && (mgos_sys_config_get_gps_gapi_update_interval() > 0)) {
     mgos_set_timer(mgos_sys_config_get_gps_gapi_update_interval(),
       MGOS_TIMER_REPEAT | MGOS_TIMER_RUN_NOW,
       mg_bgps_gapi_timer_cb, NULL);
   } else {
-    LOG(LL_WARN,("Update interval not set"));
+    LOG(LL_ERROR,("Update interval not set"));
   }
 
   return true;
