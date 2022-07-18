@@ -35,7 +35,6 @@ int mg_wifi_scan_result_to_json(struct json_out *out, va_list *ap) {
 
 static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data, void *ud) {
   struct http_message *hm = (struct http_message *) ev_data;
-  struct mg_bgps_gapi_state *state = (struct mg_bgps_gapi_state *) ud;
 
   switch (ev) {
     case MG_EV_CONNECT:
