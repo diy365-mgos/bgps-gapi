@@ -13,7 +13,7 @@ static bool s_requesting = false;
 static bool s_position_ok = false;
 static float s_latitude = 0.0;
 static float s_longitude = 0.0;
-static int s_accuracy = 0;
+static float s_accuracy = 0;
 
 int mg_wifi_scan_result_to_json(struct json_out *out, va_list *ap) {
   struct mgos_wifi_scan_result *aps = va_arg(*ap, struct mgos_wifi_scan_result *);
@@ -63,7 +63,7 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data,
           } 
         */
         json_scanf(hm->body.p, hm->body.len,
-          "{location: {lat: %f, lng: %f}, accuracy: %d}",
+          "{location: {lat: %f, lng: %f}, accuracy: %f}",
            &s_latitude, &s_longitude, &s_accuracy);
         s_position_ok = true;
       } else {
@@ -115,7 +115,7 @@ static void mg_bgps_gapi_timer_cb(void *arg) {
   (void) arg;
 }
 
-bool mgos_bgps_get_position(float *latitude, float *longitude, int *accuracy) {
+bool mgos_bgps_get_position(float *latitude, float *longitude, float *accuracy) {
   // initialize output
   if (latitude) *latitude = (s_position_ok ? s_latitude : 0.0);
   if (longitude) *longitude = (s_position_ok ? s_longitude : 0.0);
