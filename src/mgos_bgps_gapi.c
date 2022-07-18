@@ -38,12 +38,14 @@ int mg_wifi_scan_result_to_json(struct json_out *out, va_list *ap) {
 
 static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data, void *ud) {
   struct http_message *hm = (struct http_message *) ev_data;
+  struct mg_bgps_gapi_state *state = (struct mg_bgps_gapi_state *) ud;
 
   switch (ev) {
     case MG_EV_CONNECT:
-      if ((*(int *) ev_data) != 0) {
+      state->status = (*(int *) ev_data);
+      if (state->status != 0) {
         /* Error connecting */
-        LOG(LL_ERROR,("Error %d connecting...", (*(int *) ev_data)));
+        LOG(LL_ERROR,("Error %d connecting...", state->status));
         s_position_ok = false;
       }
       break;
@@ -51,7 +53,8 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data,
       LOG(LL_INFO,("MG_EV_HTTP_CHUNK"));
       break;
     case MG_EV_HTTP_REPLY:
-      if (hm->resp_code == 200) {
+      state->status = hm->resp_code;
+      if (state->status == 200) {
         /* 
           A successful geolocation request will return a JSON-formatted response
           defining a location and radius.
@@ -75,11 +78,9 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data,
           "{location: {lat: %f, lng: %f}, accuracy: %d}",
            &s_latitude, &s_longitude, &s_accuracy);
         s_position_ok = true;
-
       } else {
-        LOG(LL_ERROR,("ERR %d > %s", hm->resp_code, hm->body.p));
+        LOG(LL_ERROR,("ERR %d > %s", state->status, hm->body.p));
         s_position_ok = false;
-  
       }
       break;
     case MG_EV_CLOSE:
