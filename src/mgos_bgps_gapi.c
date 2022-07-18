@@ -143,6 +143,10 @@ bool mgos_bgps_gapi_init() {
     sprintf(s_api_url, "%s?key=%s", 
       mgos_sys_config_get_gps_gapi_url(),
       mgos_sys_config_get_gps_gapi_api_key());
+
+    LOG(LL_INFO,("Google Geolocate API URL: %s", s_api_url));
+  } else {
+    LOG(LL_ERROR,("Invalid empty API-KEY and/or API-URL"));
   }
 
   // Start the polling interval
@@ -150,6 +154,8 @@ bool mgos_bgps_gapi_init() {
     mgos_set_timer(mgos_sys_config_get_gps_gapi_update_interval(),
       MGOS_TIMER_REPEAT | MGOS_TIMER_RUN_NOW,
       mg_bgps_gapi_timer_cb, NULL);
+  } else {
+    LOG(LL_WARN,("Update interval not set"));
   }
 
   return true;
