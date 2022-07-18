@@ -22,15 +22,8 @@ int mg_wifi_scan_result_to_json(struct json_out *out, va_list *ap) {
   for (int i = 0; i < aps_len; i++) {
     if (i > 0) count += json_printf(out, ",");
 
-    count += json_printf(out, "{ \
-      signalToNoiseRatio: 0, \
-      age: 0, \
-      signalToNoiseRatio: 0, \
-      channel: %d, \
-      signalStrength: %2d, \
-      macAddress: \"%02x:%02x:%02x:%02x:%02x:%02x\" }",
-      aps[i].channel,
-      aps[i].rssi,
+    count += json_printf(out, "{signalToNoiseRatio: 0, age: 0,signalToNoiseRatio: 0, channel: %d, signalStrength: %2d, macAddress: \"%02x:%02x:%02x:%02x:%02x:%02x\"}",
+      aps[i].channel, aps[i].rssi,
       aps[i].bssid[0], aps[i].bssid[1], aps[i].bssid[2], aps[i].bssid[3], aps[i].bssid[4], aps[i].bssid[5]);
   }
 
@@ -84,7 +77,7 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data,
 static bool mg_bgps_gapi_start_get_position(int aps_len, struct mgos_wifi_scan_result *aps) {
   bool success = false;
   if (s_api_url) {
-    char *request_body = json_asprintf("considerIp: false, wifiAccessPoints: %M",
+    char *request_body = json_asprintf("{considerIp: false, wifiAccessPoints: %M}",
       mg_wifi_scan_result_to_json, aps, aps_len);
 
     if (request_body) {
