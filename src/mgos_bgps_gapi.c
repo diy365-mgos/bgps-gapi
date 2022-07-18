@@ -45,7 +45,7 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data,
     case MG_EV_CONNECT:
       if ((*(int *) ev_data) != 0) {
         /* Error connecting */
-        LOG(LL_ERROR,("Error connecting..."));
+        LOG(LL_ERROR,("Error %d connecting...", (*(int *) ev_data)));
         s_position_ok = false;
       }
       break;
@@ -93,6 +93,8 @@ static bool mg_bgps_gapi_start_get_position(int aps_len, struct mgos_wifi_scan_r
       
       if (!success) {
         LOG(LL_ERROR,("Failed POST %s", s_api_url));
+      } else {
+        LOG(LL_INFO,("POST %s to %s", request_body, s_api_url));
       }
 
       free(request_body);
