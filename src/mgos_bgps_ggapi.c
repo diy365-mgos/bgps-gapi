@@ -102,6 +102,7 @@ static void mg_bgps_gapi_wifi_scan_cb(int n, struct mgos_wifi_scan_result *res, 
   } else {
     s_position_ok = false;
   }
+  (void) arg;
 }
 
 static void mg_bgps_gapi_timer_cb(void *arg) {
