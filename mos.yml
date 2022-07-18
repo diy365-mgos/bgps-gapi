@@ -1,0 +1,28 @@
+author: DIY365
+type: lib
+description: This Mongoose OS library is a specialized bGPS library implementation that uses Google Geolocation API.
+version: 1.0
+
+sources:
+  - src
+
+includes:
+  - include
+
+filesystem:
+  - fs
+
+config_schema:
+  - ["gps.gapi", "o", {title: "Google Geolocation API config"}]
+  - ["gps.gapi.update_interval", "i", 10000, {"title": "Update interval in milliseconds."}]
+  - ["gps.gapi.url", "s", "https://www.googleapis.com/geolocation/v1/geolocate", {"title": "Geolocation request URL."}]
+  - ["gps.gapi.api_key", "s", "", {"title": "Your Google API key."}]
+
+libs:
+  - origin: https://github.com/mongoose-os-libs/wifi
+  - origin: https://github.com/diy365-mgos/bgps
+
+tags:
+  - c
+
+manifest_version: 2017-09-29
