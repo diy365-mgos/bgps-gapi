@@ -104,7 +104,7 @@ static bool mg_bgps_gapi_start_get_position(int aps_len, struct mgos_wifi_scan_r
   if (!success) {
     LOG(LL_ERROR,("Failed POST %s", s_api_url));
   } else {
-    LOG(LL_INFO,("POST %s to %s", request_body, s_api_url));
+    LOG(LL_INFO,("POST %s to %s", state->request_body, s_api_url));
   }
 
   return success;
