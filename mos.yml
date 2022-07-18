@@ -19,8 +19,11 @@ config_schema:
   - ["gps.gapi.api_key", "s", "", {"title": "Your Google API key."}]
 
 libs:
+  - origin: https://github.com/mongoose-os-libs/ca-bundle
   - origin: https://github.com/mongoose-os-libs/wifi
   - origin: https://github.com/diy365-mgos/bgps
+
+  mbedTLS error: -0x2880
 
 tags:
   - c
