@@ -6,12 +6,9 @@
 #include "mjs.h"
 #endif /* MGOS_HAVE_MJS */
 
-struct mg_bgps_gapi_state {
-  char *request_body;
-  int status;
-};
-
 static char *s_api_url = NULL;
+
+static bool s_requesting = false;
 
 static bool s_position_ok = false;
 static float s_latitude = 0.0;
@@ -42,19 +39,13 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data,
 
   switch (ev) {
     case MG_EV_CONNECT:
-      state->status = (*(int *) ev_data);
-      if (state->status != 0) {
-        /* Error connecting */
-        LOG(LL_ERROR,("Error %d connecting...", state->status));
+      if ((*(int *) ev_data) != 0) {
+        LOG(LL_ERROR,("Error %d connecting...", (*(int *) ev_data)));
         s_position_ok = false;
       }
       break;
-    case MG_EV_HTTP_CHUNK:
-      LOG(LL_INFO,("MG_EV_HTTP_CHUNK"));
-      break;
     case MG_EV_HTTP_REPLY:
-      state->status = hm->resp_code;
-      if (state->status == 200) {
+      if (hm->resp_code == 200) {
         /* 
           A successful geolocation request will return a JSON-formatted response
           defining a location and radius.
@@ -72,21 +63,18 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data,
             "accuracy": 120
           } 
         */
-        LOG(LL_INFO,("OK 200 > %s", hm->body.p));
-
         json_scanf(hm->body.p, hm->body.len,
           "{location: {lat: %f, lng: %f}, accuracy: %d}",
            &s_latitude, &s_longitude, &s_accuracy);
         s_position_ok = true;
       } else {
-        LOG(LL_ERROR,("ERR %d > %s", state->status, hm->body.p));
+        LOG(LL_ERROR,("HTTPS error %d (response: '%s')", hm->resp_code, hm->body.p));
         s_position_ok = false;
       }
+      s_requesting = false;
       break;
     case MG_EV_CLOSE:
-      free(state->request_body);
-      free(state);
-      LOG(LL_INFO,("MG_EV_CLOSE"));
+      s_requesting = false;
       break;
   }
 }
@@ -94,20 +82,19 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data,
 static bool mg_bgps_gapi_start_get_position(int aps_len, struct mgos_wifi_scan_result *aps) {
   bool success = false;
 
-  struct mg_bgps_gapi_state *state = calloc(1, sizeof(struct mg_bgps_gapi_state));
-  state->request_body = json_asprintf("{considerIp: false, wifiAccessPoints: %M}",
+  char *request_body = json_asprintf("{considerIp: false, wifiAccessPoints: %M}",
     mg_wifi_scan_result_to_json, aps, aps_len);
 
-  //"Content-Type:application/json"
-  success = mg_connect_http(mgos_get_mgr(), mg_bgps_gapi_http_cb, state, s_api_url,
-    NULL, state->request_body);
+  s_requesting = true;
+  success = mg_connect_http(mgos_get_mgr(), mg_bgps_gapi_http_cb, NULL, s_api_url,
+    NULL, request_body);
 
   if (!success) {
-    LOG(LL_ERROR,("Failed POST %s", s_api_url));
-  } else {
-    LOG(LL_INFO,("POST %s to %s", state->request_body, s_api_url));
+    s_requesting = false;
+    LOG(LL_ERROR,("POST request to %s failed (body: '%s')", s_api_url, request_body));
   }
 
+  free(request_body);
   return success;
 }
 
@@ -123,7 +110,9 @@ static void mg_bgps_gapi_wifi_scan_cb(int n, struct mgos_wifi_scan_result *res, 
 }
 
 static void mg_bgps_gapi_timer_cb(void *arg) {
-  mgos_wifi_scan(mg_bgps_gapi_wifi_scan_cb, NULL);
+  if (!s_requesting) {
+    mgos_wifi_scan(mg_bgps_gapi_wifi_scan_cb, NULL);
+  }
   (void) arg;
 }
 
