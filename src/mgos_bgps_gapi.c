@@ -99,7 +99,7 @@ static bool mg_bgps_gapi_start_get_position(int aps_len, struct mgos_wifi_scan_r
     mg_wifi_scan_result_to_json, aps, aps_len);
 
   success = mg_connect_http(mgos_get_mgr(), mg_bgps_gapi_http_cb, state, s_api_url,
-    "Content-Type=application/json", state->request_body);
+    "Content-Type:application/json", state->request_body);
 
   if (!success) {
     LOG(LL_ERROR,("Failed POST %s", s_api_url));
