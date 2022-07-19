@@ -98,6 +98,7 @@ static bool mg_bgps_gapi_start_invoke_api(int aps_len, struct mgos_wifi_scan_res
 
 static void mg_bgps_gapi_wifi_scan_cb(int n, struct mgos_wifi_scan_result *res, void *arg) {
   if (mgos_wifi_get_status() == MGOS_WIFI_IP_ACQUIRED) {
+    LOG(LL_INFO, ("SCANNING APs..."));
     if (mg_bgps_gapi_start_invoke_api(n, res)) {
       return;
     }
