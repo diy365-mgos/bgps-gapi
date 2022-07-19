@@ -147,6 +147,7 @@ static void mg_bgps_gapi_net_ev_handler(int ev, void *evd, void *arg) {
           (s_update_timer_id == MGOS_INVALID_TIMER_ID)) {
         s_update_timer_id = mgos_set_timer(mgos_sys_config_get_gps_gapi_update_interval(),
           MGOS_TIMER_REPEAT, mg_bgps_gapi_update_timer_cb, NULL);
+        LOG(LL_INFO, ("Update TIMER every %d ms", mgos_sys_config_get_gps_gapi_update_interval()));
       }
       break;
     case MGOS_NET_EV_DISCONNECTED:
