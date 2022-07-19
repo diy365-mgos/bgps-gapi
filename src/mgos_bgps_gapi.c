@@ -64,7 +64,9 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data,
         */
         json_scanf(hm->body.p, hm->body.len,
           "{location: {lat: %f, lng: %f}, accuracy: %f}",
-           &s_latitude, &s_longitude, &s_accuracy);
+           &s_position.location.latitude,
+           &s_position.location.longitude,
+           &s_position.accuracy);
         s_position_ok = true;
       } else {
         LOG(LL_ERROR,("HTTPS error %d (response: '%s')", hm->resp_code, hm->body.p));
