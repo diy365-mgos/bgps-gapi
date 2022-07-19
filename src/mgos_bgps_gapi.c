@@ -72,8 +72,10 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data,
         LOG(LL_ERROR,("HTTPS error %d (response: '%s')", hm->resp_code, hm->body.p));
         s_position_ok = false;
       }
+      LOG(LL_INFO, ("HTTP MG_EV_HTTP_REPLY"));
       break;
     case MG_EV_CLOSE:
+      LOG(LL_INFO, ("HTTP MG_EV_CLOSE"));
       s_requesting = false;
       break;
   }
@@ -112,6 +114,7 @@ static void mg_bgps_gapi_wifi_scan_cb(int n, struct mgos_wifi_scan_result *res, 
 }
 
 static bool mg_bgps_gapi_start_get_position() {
+  LOG(LL_INFO, ("mg_bgps_gapi_start_get_position()..."));
   if (!s_requesting) {
     LOG(LL_INFO, ("mgos_wifi_scan()..."));
     s_requesting = true;
