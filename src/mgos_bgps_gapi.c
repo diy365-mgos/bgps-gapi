@@ -80,6 +80,7 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data,
 }
 
 static bool mg_bgps_gapi_start_invoke_api(int aps_len, struct mgos_wifi_scan_result *aps) {
+  LOG(LL_INFO, ("mg_bgps_gapi_start_invoke_api()..."));
   bool success = false;
 
   char *request_body = json_asprintf("{considerIp: false, wifiAccessPoints: %M}",
@@ -97,8 +98,8 @@ static bool mg_bgps_gapi_start_invoke_api(int aps_len, struct mgos_wifi_scan_res
 }
 
 static void mg_bgps_gapi_wifi_scan_cb(int n, struct mgos_wifi_scan_result *res, void *arg) {
+  LOG(LL_INFO, ("mg_bgps_gapi_wifi_scan_cb()..."));
   if (mgos_wifi_get_status() == MGOS_WIFI_IP_ACQUIRED) {
-    LOG(LL_INFO, ("SCANNING APs..."));
     if (mg_bgps_gapi_start_invoke_api(n, res)) {
       return;
     }
@@ -112,6 +113,7 @@ static void mg_bgps_gapi_wifi_scan_cb(int n, struct mgos_wifi_scan_result *res, 
 
 static bool mg_bgps_gapi_start_get_position() {
   if (!s_requesting) {
+    LOG(LL_INFO, ("mgos_wifi_scan()..."));
     s_requesting = true;
     mgos_wifi_scan(mg_bgps_gapi_wifi_scan_cb, NULL);
     return true;
@@ -144,7 +146,7 @@ static void mg_bgps_gapi_net_ev_handler(int ev, void *evd, void *arg) {
       if ((mgos_sys_config_get_gps_gapi_update_interval() > 0) &&
           (s_update_timer_id == MGOS_INVALID_TIMER_ID)) {
         s_update_timer_id = mgos_set_timer(mgos_sys_config_get_gps_gapi_update_interval(),
-          MGOS_TIMER_REPEAT | MGOS_TIMER_RUN_NOW, mg_bgps_gapi_update_timer_cb, NULL);
+          MGOS_TIMER_REPEAT, mg_bgps_gapi_update_timer_cb, NULL);
       }
       break;
     case MGOS_NET_EV_DISCONNECTED:
