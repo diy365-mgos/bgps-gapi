@@ -6,6 +6,8 @@
 #include "mjs.h"
 #endif /* MGOS_HAVE_MJS */
 
+#define MG_BGPS_GAPI_GOOGLE_BASE_URL "https://www.googleapis.com/geolocation/v1/geolocate"
+
 static char *s_api_url = NULL;
 
 static bool s_requesting = false;
@@ -134,15 +136,16 @@ static void mg_bgps_gapi_net_ev_handler(int ev, void *evd, void *arg) {
   switch(ev) {
     case MGOS_NET_EV_IP_ACQUIRED:
       // Tyr to update immediately the position
-      if (s_update_timer_id == MGOS_INVALID_TIMER_ID) {
-        mg_bgps_gapi_start_get_position();
-      }
-      // Start the update timer
-      if ((mgos_sys_config_get_gps_gapi_update_interval() > 0) &&
-          (s_update_timer_id == MGOS_INVALID_TIMER_ID)) {
-        s_update_timer_id = mgos_set_timer(mgos_sys_config_get_gps_gapi_update_interval(),
-          MGOS_TIMER_REPEAT, mg_bgps_gapi_update_timer_cb, NULL);
-        LOG(LL_DEBUG, ("Update TIMER every %d ms", mgos_sys_config_get_gps_gapi_update_interval()));
+      mg_bgps_gapi_start_get_position();
+      // Try to start the update timer
+      if (mgos_sys_config_get_bgps_gapi_update_enable()) {
+        if (mgos_sys_config_get_bgps_gapi_update_interval() > 0) {
+          s_update_timer_id = mgos_set_timer(mgos_sys_config_get_bgps_gapi_update_interval(),
+            MGOS_TIMER_REPEAT, mg_bgps_gapi_update_timer_cb, NULL);
+        } else {
+          LOG(LL_ERROR,("Invalid update timer's interval (%d ms)",
+            mgos_sys_config_get_bgps_gapi_update_interval()));
+        }
       }
       break;
     case MGOS_NET_EV_DISCONNECTED:
@@ -170,19 +173,15 @@ bool mgos_bgps_gapi_init() {
 
   // Initialize the Google Geolocate API URL
   // (e.g.: https://www.googleapis.com/geolocation/v1/geolocate?key=YOUR_API_KEY)
-  if (mgos_sys_config_get_gps_gapi_api_key() != NULL &&
-      mgos_sys_config_get_gps_gapi_url() != NULL) {
-    size_t len = strlen(mgos_sys_config_get_gps_gapi_api_key()) +
-      strlen(mgos_sys_config_get_gps_gapi_url()) + strlen("?key=") + 1;
-    s_api_url = calloc(len, sizeof(char));
-    
-    sprintf(s_api_url, "%s?key=%s", 
-      mgos_sys_config_get_gps_gapi_url(),
-      mgos_sys_config_get_gps_gapi_api_key());
-
+  if (mgos_sys_config_get_bgps_gapi_api_key() != NULL) {
+    // allocate mem buffer for the full API's URL
+    s_api_url = calloc((strlen(mgos_sys_config_get_bgps_gapi_api_key()) +
+      strlen(MG_BGPS_GAPI_GOOGLE_BASE_URL) + strlen("?key=") + 1), sizeof(char));  
+    // set the mem buffer value with the full API's URL
+    sprintf(s_api_url, "%s?key=%s", MG_BGPS_GAPI_GOOGLE_BASE_URL, mgos_sys_config_get_bgps_gapi_api_key());
     LOG(LL_DEBUG,("Google Geolocate API URL: %s", s_api_url));
   } else {
-    LOG(LL_ERROR,("Invalid empty API-KEY and/or API-URL"));
+    LOG(LL_ERROR,("Invalid empty Google API key"));
   }
 
   if (s_api_url) {

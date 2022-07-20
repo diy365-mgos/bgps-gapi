@@ -13,10 +13,11 @@ filesystem:
   - fs
 
 config_schema:
-  - ["gps.gapi", "o", {title: "Google Geolocation API config"}]
-  - ["gps.gapi.update_interval", "i", 30000, {title: "Update interval in milliseconds (default 30 secs)."}]
-  - ["gps.gapi.url", "s", "https://www.googleapis.com/geolocation/v1/geolocate", {title: "Geolocation request URL."}]
-  - ["gps.gapi.api_key", "s", "", {title: "Your Google API key."}]
+  - ["bgps.gapi", "o", {title: "Google Geolocation API config"}]
+  - ["bgps.gapi.api_key", "s", "", {title: "Your Google API-KEY"}]
+  - ["bgps.gapi.update", "o", {title: "Geolocation update config"}]
+  - ["bgps.gapi.update.enable", "b", false, {title: "Enable the geolocation update"}]
+  - ["bgps.gapi.update.interval", "i", 30000, {title: "Update interval (in milliseconds)"}]
 
 libs:
   - origin: https://github.com/mongoose-os-libs/wifi
