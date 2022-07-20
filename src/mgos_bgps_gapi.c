@@ -35,7 +35,7 @@ int mg_wifi_scan_result_to_json(struct json_out *out, va_list *ap) {
   return count;
 }
 
-static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data, void *ud) {
+static void mg_bgps_gapi_http_cb(struct mg_connection *conn, int ev, void *ev_data, void *ud) {
   struct http_message *hm = (struct http_message *) ev_data;
 
   switch (ev) {
@@ -77,7 +77,7 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *c, int ev, void *ev_data,
       s_requesting = false;
       // force the connection to be closed to avoid
       // memory saturation in case of multiple requests
-      nc->flags |= MG_F_SEND_AND_CLOSE;
+      conn->flags |= MG_F_SEND_AND_CLOSE;
       break;
   }
 }
