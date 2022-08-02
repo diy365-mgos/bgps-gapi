@@ -113,7 +113,7 @@ static void mg_bgps_gapi_wifi_scan_cb(int n, struct mgos_wifi_scan_result *res, 
 }
 
 static bool mg_bgps_gapi_start_get_position() {
-  LOG(LL_INFO,("GETTTTTT POSIZIONE!!"))
+  LOG(LL_INFO,("GETTTTTT POSIZIONE!!"));
   if (!s_requesting_pos) {
     s_requesting_pos = true;
     mgos_wifi_scan(mg_bgps_gapi_wifi_scan_cb, NULL);
@@ -170,8 +170,10 @@ static void mg_bgps_gapi_stop_polling_pos() {
 static void mg_bgps_gapi_mqtt_ev_handler(struct mg_connection *nc, int ev,
                                          void *ev_data, void *user_data) {  
   if (ev == MG_EV_MQTT_CONNACK) {
+    LOG(LL_INFO,("MG_EV_MQTT_CONNACK"));
     mg_bgps_gapi_start_polling_pos();
   } else if (ev == MG_EV_MQTT_DISCONNECT) {
+    LOG(LL_INFO,("MG_EV_MQTT_DISCONNECT"));
     mg_bgps_gapi_stop_polling_pos();
   }
   (void) ev_data;
@@ -182,9 +184,11 @@ static void mg_bgps_gapi_mqtt_ev_handler(struct mg_connection *nc, int ev,
 static void mg_bgps_gapi_net_ev_handler(int ev, void *evd, void *arg) {
   switch(ev) {
     case MGOS_NET_EV_IP_ACQUIRED:
+      LOG(LL_INFO,("MGOS_NET_EV_IP_ACQUIRED"));
       mg_bgps_gapi_start_polling_pos();
       break;
     case MGOS_NET_EV_DISCONNECTED:
+      LOG(LL_INFO,("MGOS_NET_EV_DISCONNECTED"));
       mg_bgps_gapi_stop_polling_pos();
       break;
   }
