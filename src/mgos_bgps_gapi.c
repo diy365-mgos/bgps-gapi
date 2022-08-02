@@ -113,7 +113,6 @@ static void mg_bgps_gapi_wifi_scan_cb(int n, struct mgos_wifi_scan_result *res, 
 }
 
 static bool mg_bgps_gapi_start_get_position() {
-  LOG(LL_INFO,("GETTTTTT POSIZIONE!!"));
   if (!s_requesting_pos) {
     s_requesting_pos = true;
     mgos_wifi_scan(mg_bgps_gapi_wifi_scan_cb, NULL);
@@ -167,19 +166,14 @@ static void mg_bgps_gapi_stop_polling_pos() {
 }
 
 #if MG_ENABLE_MQTT
-static void mg_bgps_gapi_mqtt_ev_handler(struct mg_connection *nc, int ev,
-                                         void *ev_data, void *user_data) {
-  LOG(LL_INFO,("AAAAAA EV=%d", ev));
+static void mg_bgps_gapi_mqtt_ev_handler(int ev, void *ev_data, void *userdata) {
   if (ev == MG_EV_MQTT_CONNACK) {
-    LOG(LL_INFO,("MG_EV_MQTT_CONNACK"));
     mg_bgps_gapi_start_polling_pos();
   } else if (ev == MG_EV_MQTT_DISCONNECT) {
-    LOG(LL_INFO,("MG_EV_MQTT_DISCONNECT"));
     mg_bgps_gapi_stop_polling_pos();
   }
   (void) ev_data;
-  (void) nc;
-  (void) user_data;
+  (void) userdata;
 }
 #elif
 static void mg_bgps_gapi_net_ev_handler(int ev, void *evd, void *arg) {
@@ -224,8 +218,13 @@ bool mgos_bgps_gapi_init() {
 
   if (s_api_url) {
     #if MG_ENABLE_MQTT
-    LOG(LL_INFO,("AA mgos_mqtt_add_global_handler()..."));
-    mgos_mqtt_add_global_handler(mg_bgps_gapi_mqtt_ev_handler, NULL);
+    if (!mgos_event_add_handler(MG_EV_MQTT_CONNACK, mg_bgps_gapi_mqtt_ev_handler, NULL)) {
+      LOG(LL_ERROR,("Unable to start updating position as soon as the MQTT connection is ready"));
+    } else {
+      if (!mgos_event_add_handler(MG_EV_MQTT_DISCONNECT, mg_bgps_gapi_mqtt_ev_handler, NULL)) {
+        LOG(LL_WARN("Unable to stop updating position if MQTT connection is down"));
+      }
+    }
     #elif
     mgos_event_add_group_handler(MGOS_EVENT_GRP_NET, mg_bgps_gapi_net_ev_handler, NULL);
     #endif
