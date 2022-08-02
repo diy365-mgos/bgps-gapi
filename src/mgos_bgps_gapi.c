@@ -165,19 +165,13 @@ static void mg_bgps_gapi_stop_polling_pos() {
   }
 }
 
-#if MG_ENABLE_MQTT
-static void mg_bgps_gapi_mqtt_ev_handler(int ev, void *ev_data, void *userdata) {
-  if (ev == MG_EV_MQTT_CONNACK) {
-    mg_bgps_gapi_start_polling_pos();
-  } else if (ev == MG_EV_MQTT_DISCONNECT) {
-    mg_bgps_gapi_stop_polling_pos();
-  }
-  (void) ev_data;
-  (void) userdata;
-}
-#elif
 static void mg_bgps_gapi_net_ev_handler(int ev, void *evd, void *arg) {
   switch(ev) {
+    #if MG_ENABLE_MQTT
+    case MG_EV_MQTT_CONNACK:
+      LOG(LL_INFO,("MG_EV_MQTT_CONNACK"));
+      break;
+    #endif
     case MGOS_NET_EV_IP_ACQUIRED:
       LOG(LL_INFO,("MGOS_NET_EV_IP_ACQUIRED"));
       mg_bgps_gapi_start_polling_pos();
@@ -191,7 +185,6 @@ static void mg_bgps_gapi_net_ev_handler(int ev, void *evd, void *arg) {
   (void) evd;
   (void) arg;
 }
-#endif
 
 #ifdef MGOS_HAVE_MJS
 
@@ -218,16 +211,9 @@ bool mgos_bgps_gapi_init() {
 
   if (s_api_url) {
     #if MG_ENABLE_MQTT
-    if (!mgos_event_add_handler(MG_EV_MQTT_CONNACK, mg_bgps_gapi_mqtt_ev_handler, NULL)) {
-      LOG(LL_ERROR,("Unable to start updating position as soon as the MQTT connection is ready"));
-    } else {
-      if (!mgos_event_add_handler(MG_EV_MQTT_DISCONNECT, mg_bgps_gapi_mqtt_ev_handler, NULL)) {
-        LOG(LL_WARN, ("Unable to stop updating position if MQTT connection is down"));
-      }
-    }
-    #elif
-    mgos_event_add_group_handler(MGOS_EVENT_GRP_NET, mg_bgps_gapi_net_ev_handler, NULL);
     #endif
+    mgos_event_add_group_handler(MGOS_EVENT_GRP_NET, mg_bgps_gapi_net_ev_handler, NULL);
+    
   } else {
     LOG(LL_ERROR,("Invalid empty Google Geolocate API URL"));
   }
