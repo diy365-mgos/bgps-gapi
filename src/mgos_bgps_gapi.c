@@ -1,6 +1,9 @@
 #include "mgos.h"
 #include "mgos_bgps_gapi.h"
 #include "frozen.h"
+#if MG_ENABLE_MQTT
+#include "mgos_mqtt.h"
+#endif
 
 #ifdef MGOS_HAVE_MJS
 #include "mjs.h"
