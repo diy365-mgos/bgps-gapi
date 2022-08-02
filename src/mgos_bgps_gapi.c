@@ -139,34 +139,56 @@ bool mgos_bgps_get_position(struct mgos_bgps_position *position) {
   return s_is_position_set;
 }
 
+static void mg_bgps_gapi_start_polling_pos() {
+  // Tyr to update immediately the position
+  mg_bgps_gapi_start_get_position();
+  // Try to start the update timer
+  if (mgos_sys_config_get_bgps_gapi_update_enable()) {
+    if (mgos_sys_config_get_bgps_gapi_update_interval() > 0) {
+      s_update_timer_id = mgos_set_timer(mgos_sys_config_get_bgps_gapi_update_interval(),
+        MGOS_TIMER_REPEAT, mg_bgps_gapi_update_timer_cb, NULL);
+    } else {
+      LOG(LL_ERROR,("Invalid update timer's interval (%d ms)",
+        mgos_sys_config_get_bgps_gapi_update_interval()));
+    }
+  }
+}
+
+static void mg_bgps_gapi_stop_polling_pos() {
+  // Stop the update timer
+  if (s_update_timer_id != MGOS_INVALID_TIMER_ID) {
+    mgos_clear_timer(s_update_timer_id);
+    s_update_timer_id = MGOS_INVALID_TIMER_ID;
+  }
+}
+
+#if MG_ENABLE_MQTT
+static void mg_bgps_gapi_mqtt_ev_handler(struct mg_connection *nc, int ev,
+                                         void *ev_data, void *user_data) {  
+  if (ev == MG_EV_MQTT_CONNACK) {
+    mg_bgps_gapi_start_polling_pos();
+  } else if (ev == MG_EV_MQTT_DISCONNECT) {
+    mg_bgps_gapi_stop_polling_pos();
+  }
+  (void) ev_data;
+  (void) nc;
+  (void) user_data;
+}
+#elif
 static void mg_bgps_gapi_net_ev_handler(int ev, void *evd, void *arg) {
   switch(ev) {
     case MGOS_NET_EV_IP_ACQUIRED:
-      // Tyr to update immediately the position
-      mg_bgps_gapi_start_get_position();
-      // Try to start the update timer
-      if (mgos_sys_config_get_bgps_gapi_update_enable()) {
-        if (mgos_sys_config_get_bgps_gapi_update_interval() > 0) {
-          s_update_timer_id = mgos_set_timer(mgos_sys_config_get_bgps_gapi_update_interval(),
-            MGOS_TIMER_REPEAT, mg_bgps_gapi_update_timer_cb, NULL);
-        } else {
-          LOG(LL_ERROR,("Invalid update timer's interval (%d ms)",
-            mgos_sys_config_get_bgps_gapi_update_interval()));
-        }
-      }
+      mg_bgps_gapi_start_polling_pos();
       break;
     case MGOS_NET_EV_DISCONNECTED:
-      // Stop the update timer
-      if (s_update_timer_id != MGOS_INVALID_TIMER_ID) {
-        mgos_clear_timer(s_update_timer_id);
-        s_update_timer_id = MGOS_INVALID_TIMER_ID;
-      }
+      mg_bgps_gapi_stop_polling_pos();
       break;
   }
 
   (void) evd;
   (void) arg;
 }
+#endif
 
 #ifdef MGOS_HAVE_MJS
 
@@ -192,7 +214,11 @@ bool mgos_bgps_gapi_init() {
   }
 
   if (s_api_url) {
+    #if MG_ENABLE_MQTT
+    mgos_mqtt_add_global_handler(mg_bgps_gapi_mqtt_ev_handler, NULL);
+    #elif
     mgos_event_add_group_handler(MGOS_EVENT_GRP_NET, mg_bgps_gapi_net_ev_handler, NULL);
+    #endif
   } else {
     LOG(LL_ERROR,("Invalid empty Google Geolocate API URL"));
   }
