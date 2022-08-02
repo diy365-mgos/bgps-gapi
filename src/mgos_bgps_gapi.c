@@ -1,9 +1,6 @@
 #include "mgos.h"
 #include "mgos_bgps_gapi.h"
 #include "frozen.h"
-#if MG_ENABLE_MQTT
-#include "mgos_mqtt.h"
-#endif
 
 #ifdef MGOS_HAVE_MJS
 #include "mjs.h"
@@ -167,11 +164,6 @@ static void mg_bgps_gapi_stop_polling_pos() {
 
 static void mg_bgps_gapi_net_ev_handler(int ev, void *evd, void *arg) {
   switch(ev) {
-    #if MG_ENABLE_MQTT
-    case MG_EV_MQTT_CONNACK:
-      LOG(LL_INFO,("MG_EV_MQTT_CONNACK"));
-      break;
-    #endif
     case MGOS_NET_EV_IP_ACQUIRED:
       LOG(LL_INFO,("MGOS_NET_EV_IP_ACQUIRED"));
       mg_bgps_gapi_start_polling_pos();
@@ -210,10 +202,7 @@ bool mgos_bgps_gapi_init() {
   }
 
   if (s_api_url) {
-    #if MG_ENABLE_MQTT
-    #endif
     mgos_event_add_group_handler(MGOS_EVENT_GRP_NET, mg_bgps_gapi_net_ev_handler, NULL);
-    
   } else {
     LOG(LL_ERROR,("Invalid empty Google Geolocate API URL"));
   }
