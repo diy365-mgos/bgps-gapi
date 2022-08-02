@@ -222,7 +222,7 @@ bool mgos_bgps_gapi_init() {
       LOG(LL_ERROR,("Unable to start updating position as soon as the MQTT connection is ready"));
     } else {
       if (!mgos_event_add_handler(MG_EV_MQTT_DISCONNECT, mg_bgps_gapi_mqtt_ev_handler, NULL)) {
-        LOG(LL_WARN("Unable to stop updating position if MQTT connection is down"));
+        LOG(LL_WARN, ("Unable to stop updating position if MQTT connection is down"));
       }
     }
     #elif
