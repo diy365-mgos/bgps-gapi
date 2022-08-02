@@ -10,11 +10,11 @@
 
 static char *s_api_url = NULL;
 
-static bool s_requesting = false;
+static bool s_requesting_pos = false;
 
 static int s_update_timer_id = MGOS_INVALID_TIMER_ID;
 
-static bool s_position_ok = false;
+static bool s_is_position_set = false;
 static struct mgos_bgps_position s_position;
 
 int mg_wifi_scan_result_to_json(struct json_out *out, va_list *ap) {
@@ -41,8 +41,7 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *conn, int ev, void *ev_da
   switch (ev) {
     case MG_EV_CONNECT:
       if ((*(int *) ev_data) != 0) {
-        LOG(LL_ERROR,("Error %d connecting...", (*(int *) ev_data)));
-        s_position_ok = false;
+        LOG(LL_ERROR,("Error %d connecting to Google Geolocation API", (*(int *) ev_data)));
       }
       break;
     case MG_EV_HTTP_REPLY:
@@ -69,15 +68,16 @@ static void mg_bgps_gapi_http_cb(struct mg_connection *conn, int ev, void *ev_da
            &s_position.location.latitude,
            &s_position.location.longitude,
            &s_position.accuracy);
-        s_position_ok = true;
+        s_is_position_set = true;
       } else {
-        LOG(LL_ERROR,("HTTPS error %d (response: '%s')", hm->resp_code, hm->body.p));
-        s_position_ok = false;
+        LOG(LL_ERROR,("Response error %d (response: '%s')", hm->resp_code, hm->body.p));
       }
-      s_requesting = false;
       // force the connection to be closed to avoid
       // memory saturation in case of multiple requests
       conn->flags |= MG_F_SEND_AND_CLOSE;
+      break;
+    case MG_EV_CLOSE:
+      s_requesting_pos = false;
       break;
   }
 }
@@ -105,16 +105,13 @@ static void mg_bgps_gapi_wifi_scan_cb(int n, struct mgos_wifi_scan_result *res, 
       return;
     }
   }
-
-  s_requesting = false;
-  s_position_ok = false;
-
+  s_requesting_pos = false;
   (void) arg;
 }
 
 static bool mg_bgps_gapi_start_get_position() {
-  if (!s_requesting) {
-    s_requesting = true;
+  if (!s_requesting_pos) {
+    s_requesting_pos = true;
     mgos_wifi_scan(mg_bgps_gapi_wifi_scan_cb, NULL);
     return true;
   }
@@ -129,10 +126,17 @@ static void mg_bgps_gapi_update_timer_cb(void *arg) {
 bool mgos_bgps_get_position(struct mgos_bgps_position *position) {
   if (!position) return false;
   // initialize output
-  position->location.latitude = (s_position_ok ? s_position.location.latitude : 0.0);
-  position->location.longitude = (s_position_ok ? s_position.location.longitude : 0.0);
-  position->accuracy = (s_position_ok ? s_position.accuracy : 0.0);
-  return s_position_ok;
+  if (s_is_position_set) {
+    position->location.latitude = s_position.location.latitude;
+    position->location.longitude = s_position.location.longitude;
+    position->accuracy = s_position.accuracy;
+  } else {
+    position->location.latitude = 0.0;
+    position->location.longitude = 0.0;
+    position->accuracy = 0.0;
+  }
+  
+  return s_is_position_set;
 }
 
 static void mg_bgps_gapi_net_ev_handler(int ev, void *evd, void *arg) {
