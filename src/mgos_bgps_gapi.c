@@ -168,7 +168,8 @@ static void mg_bgps_gapi_stop_polling_pos() {
 
 #if MG_ENABLE_MQTT
 static void mg_bgps_gapi_mqtt_ev_handler(struct mg_connection *nc, int ev,
-                                         void *ev_data, void *user_data) {  
+                                         void *ev_data, void *user_data) {
+  LOG(LL_INFO,("AAAAAA EV=%d", ev));
   if (ev == MG_EV_MQTT_CONNACK) {
     LOG(LL_INFO,("MG_EV_MQTT_CONNACK"));
     mg_bgps_gapi_start_polling_pos();
@@ -223,6 +224,7 @@ bool mgos_bgps_gapi_init() {
 
   if (s_api_url) {
     #if MG_ENABLE_MQTT
+    LOG(LL_INFO,("AA mgos_mqtt_add_global_handler()..."));
     mgos_mqtt_add_global_handler(mg_bgps_gapi_mqtt_ev_handler, NULL);
     #elif
     mgos_event_add_group_handler(MGOS_EVENT_GRP_NET, mg_bgps_gapi_net_ev_handler, NULL);
