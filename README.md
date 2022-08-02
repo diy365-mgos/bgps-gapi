@@ -9,7 +9,7 @@ Add these configurations to your `mos.yml` file.
 ```yaml
 config_schema: 
   - ["bgps.gapi.api_key", "YOUR_GOOGLE_API_KEY"]
-  - ["bgps.gapi.update.enable", false]
+  - ["bgps.gapi.update.enable", true]
 
 libs:
   - location: https://github.com/mongoose-os-libs/boards
