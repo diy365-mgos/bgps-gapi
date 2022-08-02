@@ -165,11 +165,9 @@ static void mg_bgps_gapi_stop_polling_pos() {
 static void mg_bgps_gapi_net_ev_handler(int ev, void *evd, void *arg) {
   switch(ev) {
     case MGOS_NET_EV_IP_ACQUIRED:
-      LOG(LL_INFO,("MGOS_NET_EV_IP_ACQUIRED"));
       mg_bgps_gapi_start_polling_pos();
       break;
     case MGOS_NET_EV_DISCONNECTED:
-      LOG(LL_INFO,("MGOS_NET_EV_DISCONNECTED"));
       mg_bgps_gapi_stop_polling_pos();
       break;
   }
