@@ -113,6 +113,7 @@ static void mg_bgps_gapi_wifi_scan_cb(int n, struct mgos_wifi_scan_result *res, 
 }
 
 static bool mg_bgps_gapi_start_get_position() {
+  LOG(LL_INFO,("GETTTTTT POSIZIONE!!"))
   if (!s_requesting_pos) {
     s_requesting_pos = true;
     mgos_wifi_scan(mg_bgps_gapi_wifi_scan_cb, NULL);
