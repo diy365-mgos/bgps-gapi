@@ -6,8 +6,6 @@
 #include "mjs.h"
 #endif /* MGOS_HAVE_MJS */
 
-#define MG_BGPS_GAPI_GOOGLE_BASE_URL "https://www.googleapis.com/geolocation/v1/geolocate"
-
 static char *s_api_url = NULL;
 
 static bool s_requesting_pos = false;
@@ -188,15 +186,19 @@ bool mgos_bgps_gapi_init() {
 
   // Initialize the Google Geolocate API URL
   // (e.g.: https://www.googleapis.com/geolocation/v1/geolocate?key=YOUR_API_KEY)
-  if (mgos_sys_config_get_bgps_gapi_api_key() != NULL) {
+  if (mgos_sys_config_get_bgps_gapi_api_key() != NULL &&
+      mgos_sys_config_get_bgps_gapi_url() != NULL) {
     // allocate mem buffer for the full API's URL
     s_api_url = calloc((strlen(mgos_sys_config_get_bgps_gapi_api_key()) +
-      strlen(MG_BGPS_GAPI_GOOGLE_BASE_URL) + strlen("?key=") + 1), sizeof(char));  
+      strlen(mgos_sys_config_get_bgps_gapi_url()) + strlen("?key=") + 1), sizeof(char));  
     // set the mem buffer value with the full API's URL
-    sprintf(s_api_url, "%s?key=%s", MG_BGPS_GAPI_GOOGLE_BASE_URL, mgos_sys_config_get_bgps_gapi_api_key());
+    sprintf(s_api_url, "%s?key=%s",
+      mgos_sys_config_get_bgps_gapi_url(),
+      mgos_sys_config_get_bgps_gapi_api_key());
+    
     LOG(LL_DEBUG,("Google Geolocate API URL: %s", s_api_url));
   } else {
-    LOG(LL_ERROR,("Invalid empty Google API key"));
+    LOG(LL_ERROR,("Invalid empty Google API key or API's URL"));
   }
 
   if (s_api_url) {

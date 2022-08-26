@@ -14,6 +14,7 @@ filesystem:
 
 config_schema:
   - ["bgps.gapi", "o", {title: "Google Geolocation API config"}]
+  - ["bgps.gapi.url", "s", "https://www.googleapis.com/geolocation/v1/geolocate", {title: "API's URL"}]
   - ["bgps.gapi.api_key", "s", "", {title: "Your Google API-KEY"}]
   - ["bgps.gapi.update", "o", {title: "Geolocation update config"}]
   - ["bgps.gapi.update.enable", "b", false, {title: "Enable the geolocation update"}]
